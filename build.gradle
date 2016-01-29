@@ -1,7 +1,15 @@
 import org.apache.tools.ant.filters.ReplaceTokens
 
-ext.dbfitVersion = '3.0.2'
+ext.dbfitVersion = '3.2.1-SNAPSHOT'
+ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
 
+task cleanFitnesseroot(type:Exec) {
+    def gitArgs = ['clean', '-d', '-x', '-f', 'FitNesseRoot/']
+    gitArgs += keepUncommitedTests() ? ['-e', 'FitNesseRoot/DbFit/'] : []
+
+    executable 'git'
+    args gitArgs
+}
 
 task cleanDist << {
     delete 'dist'
@@ -58,6 +66,59 @@ task copyExtraLibs(dependsOn: [copyLocal]) << {
     copy {
         from project(':dbfit-java:derby').configurations.derby
         into 'dist/lib'
+    }
+}
+
+task copyTestLibs(dependsOn: ':dbfit-java:derby:integrationTestJar') << {
+    copy {
+        from 'dbfit-java'
+        include '**/*integration-test*.jar'
+        exclude 'build/**/*.jar'
+        exclude proprietaryLibs()
+        exclude experimentalItems()
+        into 'dist/lib'
+        eachFile { details ->
+            details.path = flattenPath(details.path)
+        }
+        includeEmptyDirs = false
+    }
+}
+
+task copyConnections(dependsOn: [copyLocal]) << {
+    copy {
+        from 'dbfit-java/informix/TestDbConnectionDbFitInformixANSI.properties.default'
+        into 'dist'
+        rename '(.*).default', '$1'
+    }
+
+    copy {
+        from 'dbfit-java/informix/TestDbConnectionDbFitInformixANSI.properties.custom'
+        into 'dist'
+        rename '(.*).custom', '$1'
+    }
+
+    copy {
+        from 'dbfit-java/informix/TestDbConnectionDbFitInformixINFORMIX.properties.default'
+        into 'dist'
+        rename '(.*).default', '$1'
+    }
+
+    copy {
+        from 'dbfit-java/informix/TestDbConnectionDbFitInformixINFORMIX.properties.custom'
+        into 'dist'
+        rename '(.*).custom', '$1'
+    }
+
+    copy {
+        from 'dbfit-java/oracle/TestDbConnectionDbFitOracle.properties.default'
+        into 'dist'
+        rename '(.*).default', '$1'
+    }
+
+    copy {
+        from 'dbfit-java/oracle/TestDbConnectionDbFitOracle.properties.custom'
+        into 'dist'
+        rename '(.*).custom', '$1'
     }
 }
 
@@ -121,7 +182,6 @@ task bundleFitsharp(dependsOn: copyLocal) << {
     file('dist/fitsharp/Runner.exe.config') << '<configuration><runtime><loadFromRemoteSources enabled="true"/></runtime></configuration>'
 }
 
-
 task bundle(type: Zip, dependsOn: [copyLocal, wikiDocs, bundleFitsharp]) {
     description = 'creates the zip file for distributing dbfit'
     from 'dist'
@@ -130,30 +190,81 @@ task bundle(type: Zip, dependsOn: [copyLocal, wikiDocs, bundleFitsharp]) {
     destinationDir new File('zips')
 }
 
-task start(type: Exec, dependsOn: [copyLocal, copyExtraLibs, wikiDocs, bundleFitsharp]) {
+List cmdLine () {
+    onWindows() ? ['cmd', '/c', 'startFitnesse.bat'] : ['./startFitnesse.sh']
+}
+
+task start(type: Exec, dependsOn: [copyLocal, copyExtraLibs, copyTestLibs, copyConnections, wikiDocs, bundleFitsharp]) {
     workingDir './dist'
     description = 'starts fitness with dbfit'
-    executable onWindows() ? 'startFitnesse.bat' : './startFitnesse.sh'
+    commandLine = cmdLine()
 }
 
-task starthere(type: Exec, dependsOn: [copyLocal, copyExtraLibs]) {
+task starthere(type: Exec, dependsOn: [copyLocal, copyExtraLibs, copyTestLibs, copyConnections]) {
     workingDir './dist'
     description = 'starts fitness with dbfit on top of real tests sources'
-    executable onWindows() ? 'startFitnesse.bat' : './startFitnesse.sh'
-    args '-d', '..', '-o', '-f', 'plugins.properties'
+    commandLine = cmdLine() + ['-d', '..', '-o', '-f', 'plugins.properties']
 }
 
-task fastbuild(dependsOn: [':dbfit-java:core:check', ':dbfit-java:derby:check'])
+task fastbuild(dependsOn: [
+    ':dbfit-java:core:check',
+    ':dbfit-java:db2:check',
+    ':dbfit-java:derby:check',
+    ':dbfit-java:hsqldb:check',
+    ':dbfit-java:informix:check',
+    ':dbfit-java:mysql:check',
+    ':dbfit-java:netezza:check',
+    ':dbfit-java:oracle:check',
+    ':dbfit-java:postgres:check',
+    ':dbfit-java:sqlserver:check',
+    ':dbfit-java:teradata:check',
+    ':dbfit-java:derby:integrationTest',
+    ':dbfit-java:hsqldb:integrationTest'
+    ])
+
+task travisbuild(dependsOn: [
+    fastbuild,
+    ':dbfit-java:mysql:integrationTest'
+    ])
+
+if (!project.hasProperty('excludeIntegrationTests')) {
+    project.ext.set('excludeIntegrationTests', '')
+}
+
+Set excludedIntegrationBuildDbTypes() {
+    (["dbfit-java", "core"] + project.excludeIntegrationTests.tokenize(",").collect { it.trim() })
+}
+
+assert (excludedIntegrationBuildDbTypes() - subprojects.collect { it.name }).empty
+
+def integrationBuildTasks() {
+    (subprojects.collect { it.name } - excludedIntegrationBuildDbTypes()).collect {
+        ":dbfit-java:${it}:integrationTest"
+    }
+}
+
+task integrationBuild(dependsOn: [integrationBuildTasks()])
 
 def onWindows() {
     System.properties['os.name'].toLowerCase().contains('windows')
 }
 
 def proprietaryLibs() {
-    ['**/ojdbc*.jar', '**/db2jcc4*.jar'] as Set
+    ['**/ojdbc*.jar',
+     '**/db2jcc4*.jar',
+     '**/terajdbc*.jar',
+     '**/tdgssconfig*.jar',
+     '**/nzjdbc*.jar',
+     '**/sqljdbc*.jar',
+     '**/ifxjdbc*.jar'
+    ] as Set
 }
 
 def experimentalItems() {
-    ['teradata/**/*.jar'] as Set
+    [] as Set
+}
+
+def keepUncommitedTests() {
+    project.hasProperty('keepTests') && keepTests != 'false'
 }
 

@@ -5,18 +5,26 @@ require_relative 'vagrant_config_helper'
 
 VAGRANTFILE_API_VERSION = "2"
 
+file_to_disk = CONFIG['additional_disk1_file']
+
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provider "virtualbox" do |vb|
     vb.customize ["modifyvm", :id, "--memory", CONFIG['memory']]
+    # Add another disk.
+    if ARGV[0] == "up" && !File.exist?(file_to_disk)
+        vb.customize ['createhd', '--filename', file_to_disk, '--size', 10 * 1024]
+        vb.customize ['storageattach', :id, '--storagectl', 'SATA Controller', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', file_to_disk]
+    end
   end
 
   config.omnibus.chef_version = :latest
   config.vbguest.auto_update = true
 
-  config.vm.box = "dbfitvm-test"
-  config.vm.box_url = "http://opscode-vm-bento.s3.amazonaws.com/vagrant/virtualbox/opscode_centos-6.5_chef-provisionerless.box"
+  config.vm.box = "chef/centos-7.1"
+  config.vm.box_url = "chef/centos-7.1"
   config.vm.host_name = "dbfitvm"
   config.vm.network "private_network", ip: "192.168.33.10"
+  config.vm.network "forwarded_port", guest: 8085, host: 8085
   config.vm.synced_folder "..", "/var/dbfit", CONFIG['synced_folder_options']
 
   config.vm.provision :chef_solo do |chef|
@@ -33,7 +41,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         "password" => {
           "postgres" => "postgres"
         },
-        "version" => "9.3",
+        "version" => "9.4",
         "enable_pgdg_yum" => true
       },
       "java" => {
@@ -44,7 +52,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         }
       },
       "git" => {
-        "version" => "1.9.3"
+        "version" => "2.4.5",
+        "checksum" => "eff7fc2f8378a57aea46501ab0468052377301e264cca1f454067d3ce2fd85ca"
       },
       "run_list" => ["recipe[dbfit_test]"]
     }

@@ -7,6 +7,9 @@ show_comments: true
 
 *   [DB2](#db2)
 *   [MS SQL Server](#microsoft-sql-server)
+*   [Teradata](#teradata)
+*   [Netezza](#netezza)
+*   [Informx](#informix)
 
 ---
 
@@ -103,6 +106,7 @@ There are two ways around this:
 
 1. [Download MS SQL Server JDBC driver from their site](http://www.microsoft.com/en-us/download/details.aspx?id=11774) *(It is not open source and cannot be distributed with DbFit.)*
 2. Deploy `sqljdbc4.jar` in DbFit's `lib` folder - the same folder as dbfit-XXX.jar.
+3. Deploy auth\x86\sqljdbc_auth.dll in `%programfiles(x86)%\Java\jre7\bin` folder to allow `integrated windows authentication`
 
 ### Network and firewall settings
 
@@ -140,4 +144,87 @@ There are two ways around this:
 * Using integrated security
 
 `!|Connect|jdbc:sqlserver://myhost;integratedSecurity=true|`
+
+----
+
+## Teradata
+
+### Deploying the JDBC Driver
+
+1. [Download the Teradata JDBC driver from their site](http://downloads.teradata.com/download/connectivity/jdbc-driver) *(It is not open source and cannot be distributed with DbFit.)*
+2. Deploy `terajdbc4.jar` and `tdgssconfig.jar` in DbFit's `lib` folder - the same folder as dbfit-XXX.jar.
+
+### Connection string to a Teradata database
+
+* Check DbFit reference documentation: [ConnectUsingFile](/dbfit/docs/reference.html#connect-using-file) and [Connect](/dbfit/docs/reference.html#connect).
+* Refer to the [Teradata JDBC Driver Reference](http://developer.teradata.com/connectivity/reference/jdbc-driver) for details about JDBC url syntax.
+
+
+#### Examples
+
+* Using Teradata server host name, user name, password and default database
+
+`!|Connect|myhost|myuser|mypassword|mydbname|`
+
+* Using Teradata server host name, user name, password and no default database
+
+`!|Connect|myhost|myuser|mypassword|`
+
+* Using LDAP as the authentication source (note it is not currently possible to specify a default database name and LDAP as an authentication source with this method)
+
+`!|Connect|myhost/LOGMECH=LDAP|myuser|mypassword|`
+
+* Using Teradata as the transaction mode.authentication source (note it is not currently possible to specify a default database name and a transaction mode wiht thi method)
+
+`!|Connect|myhost/TMODE=TERA|myuser|mypassword|`
+
+* Using ANSI as the transaction mode.authentication source (note it is not currently possible to specify a default database name and LDAP as an authentication source with this method)
+
+`!|Connect|myhost/TMODE=ANSI|myuser|mypassword|`
+
+* Using raw JDBC url (note that a default database, a logon authentication source and a transaction mode can all be specified with this method)
+
+`!|Connect|jdbc:teradata://myhost/user=myuser,password=mypassword,database=mydbname,tmode=TERA,logmech=td2|`
+
+----
+
+## Netezza
+
+### Deploying the JDBC Driver
+
+1. [Download the Netezza JDBC driver from their site](https://www14.software.ibm.com/webapp/iwm/web/reg/pick.do?source=swg-im-ibmndn&lang=en_US) *(It is not open source and cannot be distributed with DbFit.)*
+2. Deploy `nzjdbc.jar` in DbFit's `lib` folder - the same folder as dbfit-XXX.jar.
+
+### Connection string to a Netezza database
+
+* Check DbFit reference documentation: [ConnectUsingFile](/dbfit/docs/reference.html#connect-using-file) and [Connect](/dbfit/docs/reference.html#connect).
+* URL format is	jdbc:netezza://<HOST>:<PORT>/<DATABASE_NAME>
+
+#### Examples
+
+* Using Netezza Emulator default IP address and port, user name, password and test database
+
+`!|Connect|192.168.85.128:5480|admin|password|NETEZZATEST|`
+
+----
+
+## Informix
+
+1. [Download the Informix driver from the IBM site] (http://www-03.ibm.com/software/products/en/infjdbc).
+2. Deploy `ifxjdbc.<major>-<minor>-<tag>.jar` (e.g. `ifxjdbc-4.10.JC4W1.jar`) in DbFit's `lib` folder - the same folder as dbfit-XXX.jar.
+
+### Connection string to an Informix database
+
+* Check DbFit reference documentation: [ConnectUsingFile](/dbfit/docs/reference.html#connect-using-file) and [Connect](/dbfit/docs/reference.html#connect).
+* Refer to the [Informix JDBC Driver Reference](http://www-01.ibm.com/support/knowledgecenter/SSGU8G_12.1.0/com.ibm.jdbc_pg.doc/jdbc.htm) for details about JDBC url syntax.
+
+#### Examples
+
+* Using the Informix server host name, user name, password and database name
+
+`!|Connect|<myHost>:<myTcpPortNumber>|<myUserName>|<myPassword>|<myDbName>|`
+
+* Using a raw JDBC URL
+
+`!|Connect|jdbc:informix-sqli://<myHost>:<myTcpPortNumber>/<myDbName>:INFORMIXSERVER=<myServer>;user=<myUserName>;password=<myPassword>|`
 

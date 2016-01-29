@@ -1,6 +1,8 @@
 package dbfit.api;
 
 import dbfit.util.*;
+import dbfit.fixture.StatementExecution;
+import static dbfit.util.Options.OPTION_AUTO_COMMIT;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -14,6 +16,7 @@ public abstract class AbstractDbEnvironment implements DBEnvironment {
 
     protected Connection currentConnection;
     protected String driverClassName;
+    protected TypeTransformerFactory dbfitToJdbcTransformerFactory = new TypeTransformerFactory();
 
     protected String getDriverClassName() {
         return driverClassName;
@@ -42,13 +45,13 @@ public abstract class AbstractDbEnvironment implements DBEnvironment {
      * Intended to be overriden for post-connect activities
      */
     protected void afterConnectionEstablished() throws SQLException {
-        // empty stub
+        setAutoCommit();
     }
 
     public void connect(String connectionString, Properties info) throws SQLException {
         registerDriver();
+        closeConnection();
         currentConnection = DriverManager.getConnection(connectionString, info);
-        currentConnection.setAutoCommit(false);
         afterConnectionEstablished();
     }
 
@@ -118,22 +121,54 @@ public abstract class AbstractDbEnvironment implements DBEnvironment {
         return cs;
     }
 
+    @Override
+    public DdlStatementExecution createDdlStatementExecution(String ddl)
+            throws SQLException {
+        return new DdlStatementExecution(getConnection().createStatement(), ddl);
+    }
+
+    @Override
+    public StatementExecution createStatementExecution(PreparedStatement statement) {
+        return new StatementExecution(statement);
+    }
+
+    @Override
+    public StatementExecution createFunctionStatementExecution(PreparedStatement statement) {
+        return new StatementExecution(statement);
+    }
+
+    protected DbParameterAccessor createDbParameterAccessor(String name, Direction direction, int sqlType, Class javaType, int position) {
+        return new DbParameterAccessor(name, direction, sqlType, javaType, position, dbfitToJdbcTransformerFactory);
+    }
+
     public void closeConnection() throws SQLException {
         if (currentConnection != null) {
-            currentConnection.rollback();
+            rollback();
             currentConnection.close();
             currentConnection = null;
         }
     }
 
     public void commit() throws SQLException {
-        currentConnection.commit();
-        currentConnection.setAutoCommit(false);
+        if (!getConnection().getAutoCommit()) {
+            currentConnection.commit();
+        }
     }
 
     public void rollback() throws SQLException {
-        checkConnectionValid(currentConnection);
-        currentConnection.rollback();
+        if (!getConnection().getAutoCommit()) {
+            currentConnection.rollback();
+        }
+    }
+
+    @Override
+    public void setAutoCommit() throws SQLException {
+        String autoCommitMode = Options.get(OPTION_AUTO_COMMIT);
+        if (!"auto".equals(autoCommitMode) && isConnected(currentConnection)) {
+            if (currentConnection.getMetaData().supportsTransactions()) {
+                currentConnection.setAutoCommit(Options.is(OPTION_AUTO_COMMIT));
+            }
+        }
     }
 
     /*****/
@@ -217,11 +252,15 @@ public abstract class AbstractDbEnvironment implements DBEnvironment {
     /** Check the validity of the supplied connection. */
     public static void checkConnectionValid(final Connection conn)
             throws SQLException {
-        if (conn == null || conn.isClosed()) {
+        if (! isConnected(conn)) {
             throw new IllegalArgumentException(
                     "No open connection to a database is available. "
                             + "Make sure your database is running and that you have connected before performing any queries.");
         }
+    }
+
+    private static boolean isConnected(final Connection conn) throws SQLException {
+        return (conn != null && !conn.isClosed());
     }
 
 }

@@ -50,7 +50,7 @@ public class DB2Environment extends AbstractDbEnvironment {
         String[] qualifiers = NameNormaliser.normaliseName(tableOrViewName)
                 .split("\\.");
         String qry = " select colname as column_name, typename as data_type, length, "
-                + "	'P' as direction from syscat.columns where ";
+                + "'P' as direction from syscat.columns where ";
         if (qualifiers.length == 2) {
             qry += " lower(tabschema)=? and lower(tabname)=? ";
         } else {
@@ -79,11 +79,11 @@ public class DB2Environment extends AbstractDbEnvironment {
                 // int length=rs.getInt(3);
                 String direction = rs.getString(4);
                 Direction paramDirection = getParameterDirection(direction);
-                DbParameterAccessor dbp = new DbParameterAccessor(paramName,
+                DbParameterAccessor dbp = createDbParameterAccessor(
+                        paramName,
                         paramDirection, getSqlType(dataType),
                         getJavaClass(dataType),
-                        paramDirection == RETURN_VALUE ? -1
-                                : position++);
+                        paramDirection == RETURN_VALUE ? -1 : position++);
                 allParams.put(NameNormaliser.normaliseName(paramName), dbp);
             }
             rs.close();
@@ -180,7 +180,7 @@ public class DB2Environment extends AbstractDbEnvironment {
         String[] qualifiers = NameNormaliser.normaliseName(procName).split(
                 "\\.");
         String qry = " select parmname as column_name, typename as data_type, length, "
-                + "	rowtype as direction, ordinal from SYSIBM.SYSroutinePARMS  where ";
+                + "rowtype as direction, ordinal from SYSIBM.SYSroutinePARMS  where ";
         if (qualifiers.length == 2) {
             qry += " lower(routineschema)=? and lower(routinename)=? ";
         } else {

@@ -1,26 +1,38 @@
 ext {
-    fitNesseVersion = '20140317'
+    fitNesseVersion = '20151230'
+    mockitoVersion = '1.10.19'
+    junitVersion = '4.12'
 }
 
 allprojects {
+    apply plugin: 'java'
+    apply plugin: 'checkstyle'
     apply plugin: 'idea'
     apply plugin: 'eclipse'
-
     apply plugin: 'maven'
-    group = 'com.neuri.dbfit'
-    version = rootProject.dbfitVersion
-    
-    apply plugin: 'java'
+    apply plugin: 'signing'
 
-    apply plugin: 'checkstyle'
+    group = 'com.github.dbfit'
+    version = rootProject.dbfitVersion
 
     checkstyle {
         configFile = new File(parent.projectDir, "config/checkstyle/checkstyle.xml")
     }
 
-    tasks.withType(Compile) {
+    tasks.withType(JavaCompile) {
         options.compilerArgs << "-Xlint:unchecked"
         options.compilerArgs << "-Xlint:deprecation"
+    }
+
+    // Suppress stricter Java 8 Javadoc checks.
+    if (JavaVersion.current().isJava8Compatible()) {
+        tasks.withType(Javadoc) {
+            options.addStringOption('Xdoclint:none', '-quiet')
+        }
+    }
+
+    dependencies {
+        compile "org.fitnesse:fitnesse:${fitNesseVersion}:standalone@jar"
     }
 }
 
@@ -45,11 +57,36 @@ subprojects {
         into "$buildDir/libs"
     }
 
+    sourceSets {
+        integrationTest {
+            java {
+                srcDir 'src/integration-test/java'
+            }
+            resources {
+                srcDir 'src/integration-test/resources'
+            }
+        }
+    }
+
     dependencies {
-        testRuntime 'com.dbdeploy:dbdeploy-ant:3.0M3'
-        testCompile 'junit:junit:4.11'
-        testCompile "org.hamcrest:hamcrest-all:1.3"
+        testCompile "junit:junit:${junitVersion}"
+        testCompile "org.hamcrest:java-hamcrest:2.0.0.0"
         testCompile "commons-io:commons-io:2.4"
+        testRuntime 'com.dbdeploy:dbdeploy-ant:3.0M3'
+        integrationTestCompile "junit:junit:${junitVersion}"
+        integrationTestCompile "org.fitnesse:fitnesse:${fitNesseVersion}:standalone@jar"
+    }
+
+    task integrationTestJar(type: Jar) {
+        from sourceSets.integrationTest.output
+        baseName = "dbfit-" + project.archivesBaseName + "-integration-test"
+        include('**/*Support*')
+    }
+
+    task integrationTest(type: Test) {
+        testClassesDir = sourceSets.integrationTest.output.classesDir
+        classpath = sourceSets.integrationTest.runtimeClasspath
+        classpath += sourceSets.main.runtimeClasspath
     }
 
     ext.dbdeploy = { dbDriver, url, userid, password, delimiterType = 'normal' ->
@@ -60,28 +97,31 @@ subprojects {
                 url: url,
                 userid: userid,
                 password: password,
-                dir: "$projectDir/src/test/resources",
-                delimiterType: delimiterType,
+                dir: "$projectDir/src/integration-test/resources",
+                delimiterType: delimiterType
         )
     }
 
-    test.inputs.dir file("$projectDir/../../FitNesseRoot/DbFit/AcceptanceTests/JavaTests")
+    integrationTest.inputs.dir file("$projectDir/../../FitNesseRoot/DbFit/AcceptanceTests/JavaTests")
 }
 
 
 task assembleAll(dependsOn: subprojects.assemble) { }
 task libs(dependsOn: subprojects.libs) { }
 
+def publicCoreCompileDeps = [
+    'org.reflections:reflections:0.9.10',
+    'commons-codec:commons-codec:1.10',
+    'org.apache.commons:commons-lang3:3.4',
+    'com.github.dbfit:fitlibrary:20091020'
+]
+
 project('core') {
     description = 'DBFit core api and fixtures'
 
     dependencies {
-        compile "dummy:fitnesse-standalone:${fitNesseVersion}@jar"
-        compile "dummy:fitlibrary:20081102@jar"
-        compile "org.reflections:reflections:0.9.9-RC1"
-        compile "commons-codec:commons-codec:1.9"
-        compile "org.apache.commons:commons-lang3:3.3.1"
-        testCompile "org.mockito:mockito-all:1.9.5"
+        compile publicCoreCompileDeps
+        testCompile "org.mockito:mockito-core:${mockitoVersion}"
     }
 }
 
@@ -99,55 +139,122 @@ project('derby') {
     configurations {
         derby
         testRuntime.extendsFrom derby
+        integrationTestRuntime.extendsFrom derby
     }
     dependencies {
         compile project(':dbfit-java:core')
-        derby group: 'org.apache.derby', name: 'derby', version: '10.10.1.1'
-        derby group: 'org.apache.derby', name: 'derbyclient', version: '10.10.1.1'
+        derby group: 'org.apache.derby', name: 'derby', version: '10.12.1.1'
+        derby group: 'org.apache.derby', name: 'derbyclient', version: '10.12.1.1'
     }
 }
+
+def publicHsqldbRuntimeDeps = [
+    'org.hsqldb:hsqldb:2.3.3@jar'
+]
 
 project('hsqldb') {
     description = 'DBFit HSQLDB engine'
 
     dependencies {
         compile project(':dbfit-java:core')
+        runtime publicHsqldbRuntimeDeps
     }
 }
+
+project('informix') {
+    description = 'DBFit Informix engine'
+
+    dependencies {
+        compile project(':dbfit-java:core')
+        compile 'com.informix:ifxjdbc:4.10.JC4W1@jar'
+    }
+
+    integrationTest.doFirst {
+        copy {
+            from 'TestDbConnectionDbFitInformixANSI.properties.default'
+            into '.'
+            rename '(.*).default', '$1'
+        }
+
+        copy {
+            from 'TestDbConnectionDbFitInformixANSI.properties.custom'
+            into '.'
+            rename '(.*).custom', '$1'
+        }
+
+        copy {
+            from 'TestDbConnectionDbFitInformixINFORMIX.properties.default'
+            into '.'
+            rename '(.*).default', '$1'
+        }
+
+        copy {
+            from 'TestDbConnectionDbFitInformixINFORMIX.properties.custom'
+            into '.'
+            rename '(.*).custom', '$1'
+        }
+    }
+}
+
+def publicOracleCompileDeps = [
+    'commons-io:commons-io:2.4'
+]
 
 project('oracle') {
     description = 'DBFit Oracle engine'
 
     dependencies {
         compile project(':dbfit-java:core')
-        compile "commons-io:commons-io:2.4"
         compile 'dummy:ojdbc6:11.2.0.3.0@jar'
-        testCompile "org.mockito:mockito-all:1.9.5"
+        compile publicOracleCompileDeps
+        testCompile "org.mockito:mockito-core:${mockitoVersion}"
+    }
+
+    integrationTest.doFirst {
+        copy {
+            from 'TestDbConnectionDbFitOracle.properties.default'
+            into '.'
+            rename '(.*).default', '$1'
+        }
+
+        copy {
+            from 'TestDbConnectionDbFitOracle.properties.custom'
+            into '.'
+            rename '(.*).custom', '$1'
+        }
     }
 }
+
+def publicMysqlCompileDeps = [
+    'mysql:mysql-connector-java:5.1.36'
+]
 
 project('mysql') {
     description = 'DBFit MySQL engine'
 
     dependencies {
         compile project(':dbfit-java:core')
-        compile group: 'mysql', name: 'mysql-connector-java', version: '5.1.6'
+        compile publicMysqlCompileDeps
     }
 
-    test.doFirst {
+    integrationTest.doFirst {
         dbdeploy('com.mysql.jdbc.Driver', 'jdbc:mysql://127.0.0.1/dbfit', 'dbfit_user', 'password')
     }
 }
+
+def publicPostgresCompileDeps = [
+    'org.postgresql:postgresql:9.3-1101-jdbc41'
+]
 
 project('postgres') {
     description = 'DBFit PostGreSQL engine'
 
     dependencies {
         compile project(':dbfit-java:core')
-        compile group: 'org.postgresql', name: 'postgresql', version: '9.3-1101-jdbc41'
+        compile publicPostgresCompileDeps
     }
 
-    test.doFirst {
+    integrationTest.doFirst {
         dbdeploy('org.postgresql.Driver', 'jdbc:postgresql:dbfit', 'dbfit', 'dbfit', 'row')
     }
 }
@@ -156,8 +263,9 @@ project('sqlserver') {
     description = 'DBFit sqlserver engine'
 
     dependencies {
-        compile group: 'net.sourceforge.jtds', name: 'jtds', version: '1.2.2'
         compile project(':dbfit-java:core')
+        runtime 'com.microsoft:sqljdbc:4.1.5605@jar'
+        integrationTestRuntime 'com.microsoft:sqljdbc:4.1.5605@jar'
     }
 }
 
@@ -175,6 +283,122 @@ project('teradata') {
 
     dependencies {
         compile project(':dbfit-java:core')
+        runtime 'com.teradata:terajdbc4:15.0.0.15@jar'
+        runtime 'com.teradata:tdgssconfig:15.0.0.15@jar'
+    }
+}
+
+project('netezza') {
+    description = 'DBFit netezza engine'
+
+    dependencies {
+        compile project(':dbfit-java:core')
+        runtime 'org.netezza:nzjdbc:7.1@jar'
+    }
+}
+
+// Aggregated dependencies to include in the POM file when publishing.
+dependencies {
+    compile publicCoreCompileDeps
+    runtime publicHsqldbRuntimeDeps
+    compile publicOracleCompileDeps
+    compile publicMysqlCompileDeps
+    compile publicPostgresCompileDeps
+}
+
+// Remove the default artifact as there are no Java sources for this project.
+configurations.archives.artifacts.clear()
+
+task allJavadoc(type: Javadoc) {
+    source subprojects.collect { it.sourceSets.main.allJava }
+    destinationDir = new File(buildDir, 'doc/javadoc')
+    classpath = files(subprojects.collect { it.sourceSets.main.compileClasspath })
+}
+
+task allJavadocJar(type: Jar) {
+    baseName = 'dbfit'
+    classifier = 'javadoc'
+    from allJavadoc
+}
+
+task allSourcesJar(type: Jar) {
+    baseName = 'dbfit'
+    classifier = 'sources'
+    subprojects.each { from it.sourceSets.main.allSource }
+}
+
+task allJar(type: Jar, dependsOn: subprojects.build) {
+    baseName = 'dbfit'
+    subprojects.each { from it.configurations.archives.allArtifacts.files.collect { zipTree(it) } }
+}
+
+artifacts {
+    archives allJar, allJavadocJar, allSourcesJar
+}
+
+signing {
+    required { rootProject.isReleaseVersion && gradle.taskGraph.hasTask("uploadArchives") }
+    sign configurations.archives
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            beforeDeployment {
+                MavenDeployment deployment -> signing.signPom(deployment)
+            }
+
+            if (!project.hasProperty('ossrhUsername')) {
+                project.ext.set('ossrhUsername', '')
+            }
+
+            if (!project.hasProperty('ossrhPassword')) {
+                project.ext.set('ossrhPassword', '')
+            }
+
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            pom.project {
+                name 'DbFit'
+                packaging 'jar'
+                description 'Database test automation for FitNesse'
+
+                url 'http://dbfit.github.io/dbfit/index.html'
+                scm {
+                    connection 'scm:git@github.com/dbfit/dbfit.git'
+                    developerConnection 'scm:git@github.com/dbfit/dbfit.git'
+                    url 'https://github.com/dbfit/dbfit.git'
+                }
+
+                licenses {
+                    license {
+                        name 'GNU General Public License, version 2'
+                        url 'https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id "benilovj"
+                        name "Jake Benilov"
+                    }
+                    developer {
+                        id "javornikolov"
+                        name "Yavor Nikolov"
+                    }
+                    developer {
+                        id "mmatten"
+                        name "Mark Matten"
+                    }
+                }
+            }
+        }
     }
 }
 

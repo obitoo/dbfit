@@ -51,7 +51,7 @@ public class MySqlEnvironment extends AbstractDbEnvironment {
         String[] qualifiers = NameNormaliser.normaliseName(tableOrViewName)
                 .split("\\.");
         String qry = " select column_name, data_type, character_maximum_length "
-                + "	as direction from information_schema.columns where ";
+                + "as direction from information_schema.columns where ";
         if (qualifiers.length == 2) {
             qry += " lower(table_schema)=? and lower(table_name)=? ";
         } else {
@@ -76,7 +76,8 @@ public class MySqlEnvironment extends AbstractDbEnvironment {
                 if (columnName == null)
                     columnName = "";
                 String dataType = rs.getString(2);
-                DbParameterAccessor dbp = new DbParameterAccessor(columnName,
+                DbParameterAccessor dbp = createDbParameterAccessor(
+                        columnName,
                         Direction.INPUT, getSqlType(dataType),
                         getJavaClass(dataType), position++);
                 columns.put(NameNormaliser.normaliseName(columnName), dbp);
@@ -89,11 +90,13 @@ public class MySqlEnvironment extends AbstractDbEnvironment {
     // List interface has sequential search, so using list instead of array to
     // map types
     private static List<String> stringTypes = Arrays.asList(new String[] {
-            "VARCHAR", "CHAR", "TEXT" });
+            "VARCHAR", "CHAR", "TEXT", "TINYTEXT", "MEDIUMTEXT", "LONGTEXT" });
     private static List<String> intTypes = Arrays.asList(new String[] {
             "TINYINT", "SMALLINT", "MEDIUMINT", "INT", "INTEGER" });
     private static List<String> longTypes = Arrays.asList(new String[] {
             "BIGINT", "INTEGER UNSIGNED", "INT UNSIGNED" });
+    private static List<String> bigIntUnsignedTypes = Arrays.asList(new String[] {
+            "BIGINT UNSIGNED" });
     private static List<String> floatTypes = Arrays
             .asList(new String[] { "FLOAT" });
     private static List<String> doubleTypes = Arrays
@@ -106,6 +109,7 @@ public class MySqlEnvironment extends AbstractDbEnvironment {
             "TIMESTAMP", "DATETIME" });
     private static List<String> timeTypes = Arrays.asList("TIME");
     private static List<String> refCursorTypes = Arrays.asList(new String[] {});
+    private static List<String> bitTypes = Arrays.asList("BIT");
 
     private static String normaliseTypeName(String dataType) {
         dataType = dataType.toUpperCase().trim();
@@ -128,6 +132,8 @@ public class MySqlEnvironment extends AbstractDbEnvironment {
             return java.sql.Types.DOUBLE;
         if (longTypes.contains(dataType))
             return java.sql.Types.BIGINT;
+        if (bigIntUnsignedTypes.contains(dataType))
+            return java.sql.Types.BIGINT;
         if (timestampTypes.contains(dataType))
             return java.sql.Types.TIMESTAMP;
         if (dateTypes.contains(dataType))
@@ -136,6 +142,8 @@ public class MySqlEnvironment extends AbstractDbEnvironment {
             return java.sql.Types.TIME;
         if (refCursorTypes.contains(dataType))
             return java.sql.Types.REF;
+        if (bitTypes.contains(dataType))
+            return java.sql.Types.BIT;
         throw new UnsupportedOperationException("Type " + dataType
                 + " is not supported");
     }
@@ -158,10 +166,14 @@ public class MySqlEnvironment extends AbstractDbEnvironment {
             return Double.class;
         if (longTypes.contains(dataType))
             return Long.class;
+        if (bigIntUnsignedTypes.contains(dataType))
+            return java.math.BigInteger.class;
         if (timestampTypes.contains(dataType))
             return java.sql.Timestamp.class;
         if (timeTypes.contains(dataType))
             return java.sql.Time.class;
+        if (bitTypes.contains(dataType))
+            return Boolean.class;
         throw new UnsupportedOperationException("Type " + dataType
                 + " is not supported");
     }
@@ -202,7 +214,7 @@ public class MySqlEnvironment extends AbstractDbEnvironment {
 
         int position = 0;
         for (ParamDescriptor pd: parser.parseParameters(paramList)) {
-            DbParameterAccessor dbp = new DbParameterAccessor(
+            DbParameterAccessor dbp = createDbParameterAccessor(
                     pd.name, pd.direction,
                     getSqlType(pd.type), getJavaClass(pd.type),
                     position++);
@@ -211,7 +223,8 @@ public class MySqlEnvironment extends AbstractDbEnvironment {
 
         if ("FUNCTION".equals(type)) {
             ParamDescriptor rd = parser.parseReturnType(returns);
-            allParams.put("", new DbParameterAccessor("",
+            allParams.put("", createDbParameterAccessor(
+                    "",
                     Direction.RETURN_VALUE, getSqlType(rd.type),
                     getJavaClass(rd.type), -1));
         }

@@ -6,7 +6,7 @@ import dbfit.util.DbParameterAccessor;
 import dbfit.util.DbParameterAccessorsMapBuilder;
 import dbfit.util.Direction;
 import static dbfit.util.Direction.*;
-import static dbfit.util.NameNormaliser.normaliseName;
+import static dbfit.util.LangUtils.enquoteAndJoin;
 import dbfit.util.TypeNormaliserFactory;
 import static dbfit.environment.SqlServerTypeNameNormaliser.normaliseTypeName;
 
@@ -15,7 +15,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -70,7 +69,7 @@ public class SqlServerEnvironment extends AbstractDbEnvironment {
             throws SQLException {
         String qry = " select c.[name], TYPE_NAME(c.system_type_id) as [Type], c.max_length, "
                 + " 0 As is_output, 0 As is_cursor_ref "
-                + " from sys.columns c "
+                + " from " + objectDatabasePrefix(tableOrViewName) + "sys.columns c "
                 + " where c.object_id = OBJECT_ID(?) "
                 + " order by column_id";
         return readIntoParams(tableOrViewName, qry);
@@ -78,17 +77,13 @@ public class SqlServerEnvironment extends AbstractDbEnvironment {
 
     private Map<String, DbParameterAccessor> readIntoParams(String objname,
             String query) throws SQLException {
-        DbParameterAccessorsMapBuilder params = new DbParameterAccessorsMapBuilder();
+        DbParameterAccessorsMapBuilder params = new DbParameterAccessorsMapBuilder(dbfitToJdbcTransformerFactory);
 
-        if (objname.contains(".")) {
-            String[] schemaAndName = objname.split("[\\.]", 2);
-            objname = "[" + schemaAndName[0] + "].[" + schemaAndName[1] + "]";
-        } else {
-            objname = "[" + normaliseName(objname) + "]";
-        }
+        objname = objname.replaceAll("[^a-zA-Z0-9_.#$]", "");
+        String bracketedName = enquoteAndJoin(objname.split("\\."), ".", "[", "]");
 
         try (PreparedStatement dc = currentConnection.prepareStatement(query)) {
-            dc.setString(1, normaliseName(objname));
+            dc.setString(1, bracketedName);
             ResultSet rs = dc.executeQuery();
 
             while (rs.next()) {
@@ -125,7 +120,7 @@ public class SqlServerEnvironment extends AbstractDbEnvironment {
     private static List<String> decimalTypes = Arrays.asList(new String[] {
             "DECIMAL", "MONEY", "SMALLMONEY" });
     private static List<String> timestampTypes = Arrays.asList(new String[] {
-            "SMALLDATETIME", "DATETIME", "DATETIME2", "TIMESTAMP" });
+            "SMALLDATETIME", "DATETIME", "DATETIME2" });
     private static List<String> dateTypes = Arrays.asList("DATE");
     private static List<String> timeTypes = Arrays.asList("TIME");
 
@@ -134,16 +129,25 @@ public class SqlServerEnvironment extends AbstractDbEnvironment {
     // private static List<String> doubleTypes=Arrays.asList(new
     // String[]{"DOUBLE"});
 
-    // private static string[] BinaryTypes=new string[] {"BINARY","VARBINARY"};
+    // private static string[] BinaryTypes=new string[] {"BINARY","VARBINARY", "TIMESTAMP"};
     // private static string[] GuidTypes = new string[] { "UNIQUEIDENTIFIER" };
     // private static string[] VariantTypes = new string[] { "SQL_VARIANT" };
+
+    private String objectDatabasePrefix(String dbObjectName) {
+        String objectDatabasePrefix = "";
+        String[] objnameParts = dbObjectName.split("\\.");
+        if (objnameParts.length == 3) {
+            objectDatabasePrefix = objnameParts[0] + ".";
+        }
+        return objectDatabasePrefix;
+    }
 
     private static Direction getParameterDirection(int isOutput, String name) {
         if (name.isEmpty()) {
             return RETURN_VALUE;
         }
 
-        return (isOutput == 1) ? OUTPUT : INPUT;
+        return (isOutput == 1) ? INPUT_OUTPUT : INPUT;
     }
 
     private static int getSqlType(String dataType) {
@@ -215,10 +219,19 @@ public class SqlServerEnvironment extends AbstractDbEnvironment {
             String procName) throws SQLException {
         return readIntoParams(
                 procName,
-                "select p.[name], TYPE_NAME(p.system_type_id) as [Type],  "
-                        + " p.max_length, p.is_output, p.is_cursor_ref from sys.parameters p "
-                        + " where p.object_id = OBJECT_ID(?) order by parameter_id ");
-
+                "select [name], [Type], max_length, is_output, is_cursor_ref from "
+                    + "("
+                    + "   select "
+                    + "       p.[name], TYPE_NAME(p.system_type_id) as [Type], "
+                    + "       p.max_length, p.is_output, p.is_cursor_ref, "
+                    + "       p.parameter_id, 0 as set_id, p.object_id "
+                    + "   from " + objectDatabasePrefix(procName) + "sys.parameters p "
+                    + "   union all select "
+                    + "        '' as [name], 'int' as [Type], "
+                    + "        4 as max_length, 1 as is_output, 0 as is_cursor_ref, "
+                    + "        null as parameter_id, 1 as set_id, object_id "
+                    + "   from " + objectDatabasePrefix(procName) + "sys.objects where type in (N'P', N'PC') "
+                    + ") as u where object_id = OBJECT_ID(?) order by set_id, parameter_id");
     }
 
     public String buildInsertCommand(String tableName,

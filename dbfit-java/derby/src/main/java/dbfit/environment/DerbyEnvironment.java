@@ -21,7 +21,7 @@ import dbfit.util.Direction;
 /**
  * Encapsulates support for the Derby database (also known as JavaDB). Operates
  * in Client mode.
- * 
+ *
  * @see EmbeddedDerbyEnvironment
  * @author P&aring;l Brattberg, pal.brattberg@acando.com
  */
@@ -61,8 +61,7 @@ public class DerbyEnvironment extends AbstractDbEnvironment {
 
     private Map<String, DbParameterAccessor> readIntoParams(
             String tableOrViewName, String query) throws SQLException {
-        checkConnectionValid(currentConnection);
-        try (PreparedStatement dc = currentConnection.prepareStatement(query)) {
+        try (PreparedStatement dc = getConnection().prepareStatement(query)) {
             dc.setString(1, tableOrViewName);
 
             ResultSet rs = dc.executeQuery();
@@ -71,7 +70,8 @@ public class DerbyEnvironment extends AbstractDbEnvironment {
             while (rs.next()) {
                 String columnName = rs.getString(1);
                 String dataType = rs.getString(2);
-                DbParameterAccessor dbp = new DbParameterAccessor(columnName,
+                DbParameterAccessor dbp = createDbParameterAccessor(
+                        columnName,
                         Direction.INPUT,
                         typeMapper.getJDBCSQLTypeForDBType(dataType),
                         getJavaClass(dataType), position++);
@@ -204,4 +204,3 @@ public class DerbyEnvironment extends AbstractDbEnvironment {
         }
     }
 }
-

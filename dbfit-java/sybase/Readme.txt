@@ -1,1 +1,1 @@
-Sybase Adaptar
+Sybase Adapter

@@ -10,6 +10,7 @@ import static dbfit.util.NameNormaliser.normaliseName;
 import dbfit.util.TypeNormaliserFactory;
 import static dbfit.environment.SybaseTypeNameNormaliser.normaliseTypeName;
 
+
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -52,15 +53,14 @@ public class SybaseEnvironment extends AbstractDbEnvironment {
         // Add sendTimeAsDatetime=false option to enforce sending Time as
         // java.sql.Time (otherwise some precision is lost in conversions)
         super.connect(connectionString + ";sendTimeAsDatetime=false", info);
-    	/*SybDriver sybDriver = null;
-    	
-    	try{
-    		sybDriver = (SybDriver)Class.forName("com.sybase.jdbc2.jdbc.SybDriver").newInstance();
-    		currentConnection = DriverManager.getConnection(connectionString, info.getProperty("user"),info.getProperty("password"));
-    	}catch(Exception E){
-    		E.printStackTrace();
-    		}*/
-    		
+        /*SybDriver sybDriver = null;
+**
+**        try{
+**                sybDriver = (SybDriver)Class.forName("com.sybase.jdbc2.jdbc.SybDriver").newInstance();
+**                currentConnection = DriverManager.getConnection(connectionString, info.getProperty("user"),info.getProperty("password"));
+**        }catch(Exception E){
+**               E.printStackTrace();
+**           */
     }
 
     private static String paramNamePattern = "@([A-Za-z0-9_]+)";
@@ -77,17 +77,28 @@ public class SybaseEnvironment extends AbstractDbEnvironment {
 
     public Map<String, DbParameterAccessor> getAllColumns(String tableOrViewName)
             throws SQLException {
-        String qry = " select c.[name], TYPE_NAME(c.system_type_id) as [Type], c.max_length, "
-                + " 0 As is_output, 0 As is_cursor_ref "
-                + " from sys.columns c "
-                + " where c.object_id = OBJECT_ID(?) "
-                + " order by column_id";
+//        String qry = " select c.[name], TYPE_NAME(c.system_type_id) as [Type], c.max_length, "
+//                + " 0 As is_output, 0 As is_cursor_ref "
+//                + " from syscolumns c "
+//                + " where c.object_id = OBJECT_ID(?) "
+//                + " order by column_id";
+          String qry = " select c.[name], "
+                      +"       CONVERT (char(30), SUBSTRING (T2.name, 1, CHAR_LENGTH (RTRIM (T2.name)) - "
+                      +"             CHARINDEX ('n', SUBSTRING (T2.name, CHAR_LENGTH (RTRIM (T2.name)), 1)))) as [Type], "
+                      +"       c.length, 0 As is_output, 0 As is_cursor_ref "
+                      +" from syscolumns c , systypes T1, systypes T2 "
+                      +" where c.id = OBJECT_ID(?) "
+                      +"  and   T1.usertype  = c.usertype "
+                      +"  and   T2.type      = T1.type "
+                      +"  and   T2.name     IN ('char', 'int', 'intn', 'bigint','bigintn', "
+                      +"                        'datetime', 'float', 'floatn', 'varchar', 'smallint', 'tinyint') "
+                      +" order by colid ";
         return readIntoParams(tableOrViewName, qry);
     }
 
     private Map<String, DbParameterAccessor> readIntoParams(String objname,
             String query) throws SQLException {
-        DbParameterAccessorsMapBuilder params = new DbParameterAccessorsMapBuilder();
+        DbParameterAccessorsMapBuilder params = new DbParameterAccessorsMapBuilder(dbfitToJdbcTransformerFactory);
 
         if (objname.contains(".")) {
             String[] schemaAndName = objname.split("[\\.]", 2);
@@ -224,9 +235,23 @@ public class SybaseEnvironment extends AbstractDbEnvironment {
             String procName) throws SQLException {
         return readIntoParams(
                 procName,
-                "select p.[name], TYPE_NAME(p.system_type_id) as [Type],  "
-                        + " p.max_length, p.is_output, p.is_cursor_ref from sys.parameters p "
-                        + " where p.object_id = OBJECT_ID(?) order by parameter_id ");
+//                "select p.[name], TYPE_NAME(p.system_type_id) as [Type],  "
+//                        + " p.max_length, p.is_output, p.is_cursor_ref from sys.parameters p "
+//                        + " where p.object_id = OBJECT_ID(?) order by parameter_id ");
+
+                "select p.[name], "
+               +"       CONVERT (char(30), SUBSTRING (T2.name, 1, CHAR_LENGTH (RTRIM (T2.name)) - "
+               +"         CHARINDEX ('n', SUBSTRING (T2.name, CHAR_LENGTH (RTRIM (T2.name)), 1)))) as [Type],  "
+               +"       max_length = p.length, "
+               +"       case status2 when 2 then 1 else 0 end as [is_output] , "
+               +"       is_cursor_ref = 0               "
+               +"from syscolumns p , systypes T1, systypes T2 "
+               +"where p.id = OBJECT_ID(?) "
+               +"  and   T1.usertype  = p.usertype "
+               +"  and   T2.type      = T1.type "
+               +"  and   T2.name     IN ('char', 'int', 'intn', 'bigint','bigintn', "
+               +"                        'datetime', 'float', 'floatn', 'varchar', 'smallint', 'tinyint') "
+               +"order by colid ");
 
     }
 

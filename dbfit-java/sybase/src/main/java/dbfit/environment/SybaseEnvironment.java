@@ -25,6 +25,7 @@ import java.util.Properties;
 import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 
 @DatabaseEnvironment(name="Sybase", driver="net.sourceforge.jtds.jdbc.Driver")
+
 public class SybaseEnvironment extends AbstractDbEnvironment {
 
     public SybaseEnvironment(String driverClassName) {

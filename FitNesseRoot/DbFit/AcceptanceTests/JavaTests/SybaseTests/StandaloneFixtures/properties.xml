@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<properties>
+<Edit/>
+<Files/>
+<Properties/>
+<RecentChanges/>
+<Refactor/>
+<Search/>
+<Suite/>
+<SymbolicLinks>
+<AccessObjectsInNonDefaultDb>.DbFit.AcceptanceTests.DotNetTests.SybaseTests.FlowMode.AccessObjectsInNonDefaultDb</AccessObjectsInNonDefaultDb>
+<CommitAndRollback>.DbFit.AcceptanceTests.LibraryTests.CommitAndRollback</CommitAndRollback>
+<CoreTests>.DbFit.AcceptanceTests.CoreTests</CoreTests>
+</SymbolicLinks>
+<Versions/>
+<WhereUsed/>
+</properties>

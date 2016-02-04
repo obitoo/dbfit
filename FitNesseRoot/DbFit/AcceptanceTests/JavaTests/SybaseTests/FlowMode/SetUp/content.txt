@@ -1,0 +1,3 @@
+!|dbfit.SybaseTest|
+
+!|Connect|localhost|FitNesseUser|FitNesseUser|FitNesseTestDB|

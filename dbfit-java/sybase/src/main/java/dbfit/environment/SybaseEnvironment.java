@@ -6,7 +6,7 @@ import dbfit.util.DbParameterAccessor;
 import dbfit.util.DbParameterAccessorsMapBuilder;
 import dbfit.util.Direction;
 import static dbfit.util.Direction.*;
-import static dbfit.util.NameNormaliser.normaliseName;
+import static dbfit.environment.SybaseNameNormaliser.normaliseName;
 import dbfit.util.TypeNormaliserFactory;
 import static dbfit.environment.SybaseTypeNameNormaliser.normaliseTypeName;
 
@@ -78,11 +78,6 @@ public class SybaseEnvironment extends AbstractDbEnvironment {
 
     public Map<String, DbParameterAccessor> getAllColumns(String tableOrViewName)
             throws SQLException {
-//        String qry = " select c.[name], TYPE_NAME(c.system_type_id) as [Type], c.max_length, "
-//                + " 0 As is_output, 0 As is_cursor_ref "
-//                + " from syscolumns c "
-//                + " where c.object_id = OBJECT_ID(?) "
-//                + " order by column_id";
           String qry = " select c.[name], "
                       +"       CONVERT (char(30), SUBSTRING (T2.name, 1, CHAR_LENGTH (RTRIM (T2.name)) - "
                       +"             CHARINDEX ('n', SUBSTRING (T2.name, CHAR_LENGTH (RTRIM (T2.name)), 1)))) as [Type], "
@@ -92,7 +87,7 @@ public class SybaseEnvironment extends AbstractDbEnvironment {
                       +"  and   T1.usertype  = c.usertype "
                       +"  and   T2.type      = T1.type "
                       +"  and   T2.name     IN ('char', 'int', 'intn', 'bigint','bigintn', "
-                      +"                        'datetime', 'float', 'floatn', 'varchar', 'smallint', 'tinyint') "
+                      +"                        'datetime','date','float', 'floatn', 'varchar', 'smallint', 'tinyint') "
                       +" order by colid ";
         return readIntoParams(tableOrViewName, qry);
     }
@@ -236,10 +231,6 @@ public class SybaseEnvironment extends AbstractDbEnvironment {
             String procName) throws SQLException {
         return readIntoParams(
                 procName,
-//                "select p.[name], TYPE_NAME(p.system_type_id) as [Type],  "
-//                        + " p.max_length, p.is_output, p.is_cursor_ref from sys.parameters p "
-//                        + " where p.object_id = OBJECT_ID(?) order by parameter_id ");
-
                 "select p.[name], "
                +"       CONVERT (char(30), SUBSTRING (T2.name, 1, CHAR_LENGTH (RTRIM (T2.name)) - "
                +"         CHARINDEX ('n', SUBSTRING (T2.name, CHAR_LENGTH (RTRIM (T2.name)), 1)))) as [Type],  "
@@ -251,7 +242,7 @@ public class SybaseEnvironment extends AbstractDbEnvironment {
                +"  and   T1.usertype  = p.usertype "
                +"  and   T2.type      = T1.type "
                +"  and   T2.name     IN ('char', 'int', 'intn', 'bigint','bigintn', "
-               +"                        'datetime', 'float', 'floatn', 'varchar', 'smallint', 'tinyint') "
+               +"                        'datetime','date', 'float', 'floatn', 'varchar', 'smallint', 'tinyint') "
                +"order by colid ");
 
     }

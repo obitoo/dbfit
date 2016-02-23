@@ -1,0 +1,4 @@
+| commit |
+|Execute|Drop table datatypetest|
+| commit |
+

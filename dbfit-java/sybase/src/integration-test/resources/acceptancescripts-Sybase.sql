@@ -1,17 +1,17 @@
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Multiply]') AND type in (N'FN', N'IF', N'TF', N'FS', N'FT'))
-BEGIN
-execute dbo.sp_executesql @statement = N'  create function [dbo].[Multiply](@n1 int, @n2 int) returns int as  begin  	declare @num3 int;  	set @num3 = @n1*@n2;  	return @num3;  end;  ' 
-END
 
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
+
+--IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Multiply]') AND type in (N'FN', N'IF', N'TF', N'FS', N'FT'))
+--BEGIN
+--execute dbo.sp_executesql @statement = N'  create function [dbo].[Multiply](@n1 int, @n2 int) returns int as  begin  	declare @num3 int;  	set @num3 = @n1*@n2;  	return @num3;  end;  ' 
+--END
+
+--GO
+
+
+
+
+
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[CalcLength_P]') AND type in (N'P', N'PC'))
 BEGIN
 EXEC dbo.sp_executesql @statement = N'CREATE PROCEDURE [dbo].[CalcLength_P]
@@ -23,10 +23,6 @@ BEGIN
 END;
 ' 
 END
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
 GO
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[ReturnUserTable_F]') AND type in (N'FN', N'IF', N'TF', N'FS', N'FT'))
 BEGIN
@@ -64,10 +60,6 @@ END
 END
 
 GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[ConcatenateStrings_P]') AND type in (N'P', N'PC'))
 BEGIN
 EXEC dbo.sp_executesql @statement = N'
@@ -81,10 +73,6 @@ BEGIN
 END
 ' 
 END
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
 GO
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[ConcatenateStrings_F]') AND type in (N'FN', N'IF', N'TF', N'FS', N'FT'))
 BEGIN
@@ -105,23 +93,48 @@ END
 END
 
 GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Users]') AND type in (N'U'))
+
+
+
+
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name = 'Users' AND type in ('U'))
 BEGIN
-CREATE TABLE [dbo].[Users](
-	[name] [varchar](50) NULL,
-	[username] [varchar](50) NULL,
-	[userid] [int] IDENTITY(1,1) NOT NULL
-) ON [PRIMARY]
+CREATE TABLE users(
+        name     varchar(50) NULL,
+        username varchar(50) NULL,
+        userid   int         IDENTITY NOT NULL
+)
 END
 GO
-SET ANSI_NULLS ON
+
+
+CREATE PROCEDURE MakeUser AS
+begin
+        insert into users (name, username) values ('user1', 'fromproc')
+end
 GO
-SET QUOTED_IDENTIFIER ON
+
+CREATE PROCEDURE calclength_p @name      VARCHAR(255)
+                            , @strlength INT OUTPUT
+AS
+BEGIN
+	SET @strlength = len(@name)
+END
 GO
+
+CREATE PROCEDURE increment_p @counter INT OUTPUT
+AS
+BEGIN
+	SET @counter = ISNULL(@counter, 1) + 1
+END
+GO
+
+
+
+
+
+
+
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[PopulateUserTable_P]') AND type in (N'P', N'PC'))
 BEGIN
 EXEC dbo.sp_executesql @statement = N'CREATE PROCEDURE [dbo].[PopulateUserTable_P]
@@ -141,10 +154,6 @@ END
 ' 
 END
 GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[OpenCrsr_P]') AND type in (N'P', N'PC'))
 BEGIN
 EXEC dbo.sp_executesql @statement = N'CREATE PROCEDURE [dbo].[OpenCrsr_P]
@@ -160,10 +169,6 @@ BEGIN
 END
 ' 
 END
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
 GO
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[DeleteUserTable_P]') AND type in (N'P', N'PC'))
 BEGIN

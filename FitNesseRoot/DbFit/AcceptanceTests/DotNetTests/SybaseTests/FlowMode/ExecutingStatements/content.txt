@@ -9,5 +9,5 @@
 |Darth Maul|10|
 |Obi Wan|80|
 
-
+| Commit |
 |Execute|Drop table Test_DBFit|

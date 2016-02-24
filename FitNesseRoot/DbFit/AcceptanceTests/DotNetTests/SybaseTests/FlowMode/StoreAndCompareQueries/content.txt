@@ -1,3 +1,5 @@
+| Execute Ddl | IF EXISTS (select * from sysobjects where name = 'tn'    ) DROP TABLE tn |
+
 |execute|create table tn(n int, name varchar(100))|
 
 |insert|tn|
@@ -15,5 +17,5 @@
 |compare stored queries|fromtable|fromdual|
 |n?|name|
 
-
+| commit |
 |execute|drop table tn|

@@ -1,11 +1,5 @@
 !|dbfit.SybaseTest|
 
-#!|Connect|localhost|FitNesseUser|FitNesseUser|FitNesseTestDB|
-
-
-# Ribo @ deva03 : 10.158.0.136:8001;
-# GBR_HYD44:   
-# GBR_HYD53:      10.158.0.189:8000;
 !| Connect | jdbc:jtds:sybase://LOND1301BULLOCK:5000;user=FitNesseUser;password=FitNesseUser;databaseName=FitNesseTestDB |
 
  

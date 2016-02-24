@@ -1,5 +1,7 @@
 
+------------------------------------------------
 -- Create databases
+------------------------------------------------
 CREATE DATABASE FitNesseTestDB
 go
 
@@ -7,7 +9,9 @@ CREATE DATABASE FitNesseTestDB2
 go
 
 
+------------------------------------------------
 -- Create user
+------------------------------------------------
 CREATE LOGIN FitNesseUser WITH PASSWORD FitNesseUser   default database FitNesseTestDB
 go
 GRANT ROLE sa_role TO FitNesseUser
@@ -28,7 +32,9 @@ GRANT all TO FitNesseUser
 go
 
 
+------------------------------------------------
 --  Objects - first Db
+------------------------------------------------
 
 USE FitNesseTestDB
 go
@@ -36,9 +42,9 @@ go
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name = 'users' AND type in ('U'))
 BEGIN
 CREATE TABLE users(
-        name     varchar(50) NULL,
-        username varchar(50) NULL,
-        userid   int         IDENTITY NOT NULL
+        Name     varchar(50) NULL,
+        UserName varchar(50) NULL,
+        UserId   int         IDENTITY NOT NULL
 )
 END
 go
@@ -50,20 +56,24 @@ begin
 end
 go
 
-CREATE PROCEDURE calclength_p @name      VARCHAR(255)
-                            , @strlength INT OUTPUT
+CREATE PROCEDURE CalcLength_P (@name      VARCHAR(255) , @strlength INT OUTPUT)
 AS
 BEGIN
 	SET @strlength = len(@name)
 END
 go
+EXEC sp_procxmode CalcLength_P , anymode
+go
 
-CREATE PROCEDURE increment_p @counter INT OUTPUT
+CREATE PROCEDURE Increment_P @counter INT OUTPUT
 AS
 BEGIN
 	SET @counter = ISNULL(@counter, 1) + 1
 END
 go
+EXEC sp_procxmode Increment_P , anymode
+go
+
 
 CREATE FUNCTION dbo.Multiply(@n1 int, @n2 int) RETURNS int 
 AS
@@ -76,9 +86,55 @@ go
 
 
 
+CREATE PROCEDURE MultiplyIO(@factor int, @val int output)
+AS
+BEGIN
+	set @val = @factor*@val
+END
+go
+
+EXEC sp_procxmode MultiplyIO , anymode
+go
 
 
+CREATE PROCEDURE TestProc2 ( @iddocument int, @iddestination_user int)
+AS
+BEGIN
+declare @errorsave int
+
+set @errorsave = 0
+
+if (@iddocument < 100)
+begin
+	set @errorsave = 53120
+	raiserror @errorsave, 15, 1, 'Custom error message' 
+	return @errorsave
+end
+END
+go
+EXEC sp_procxmode TestProc2 , anymode
+go
+
+sp_addmessage @message_num = 53120, @severity=1, @message_text = 'test user defined error msg'
+go
+
+
+drop procedure ListUsers_P
+go
+CREATE PROCEDURE ListUsers_P (@howmuch int )
+AS
+BEGIN
+   declare @sql varchar(255)
+   select @sql = 'select top '+convert(varchar,@howmuch)+' * from users order by UserId'
+   exec (@sql)
+END
+go
+EXEC sp_procxmode ListUsers_P , anymode
+go
+
+------------------------------------------------
 --  Objects - second Db
+------------------------------------------------
 USE FitNesseTestDB2
 go
 
@@ -117,20 +173,6 @@ go
 
 
 
-
-
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[CalcLength_P]') AND type in (N'P', N'PC'))
-BEGIN
-EXEC dbo.sp_executesql @statement = N'CREATE PROCEDURE [dbo].[CalcLength_P]
-@name VARCHAR(255)
-, @strlength INT OUTPUT
-AS
-BEGIN
-	SET @strlength = DataLength(@name);
-END;
-' 
-END
-go
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[ReturnUserTable_F]') AND type in (N'FN', N'IF', N'TF', N'FS', N'FT'))
 BEGIN
 execute dbo.sp_executesql @statement = N'-- =============================================
@@ -251,33 +293,6 @@ DELETE [Users];
 ' 
 END
 
-CREATE PROCEDURE [dbo].[TestProc2]
-	@iddocument int,
-	@iddestination_user int
-as
-declare @errorsave int
-
-set @errorsave = 0
-
-if (@iddocument < 100)
-begin
-	set @errorsave = 53120
-	raiserror(@errorsave, 15, 1, 'Custom error message')
-	return @errorsave
-end
-
-sp_addmessage @msgnum = 53120, @severity=1, @msgtext = 'test user defined error msg' 
-
-CREATE procedure [dbo].[ListUsers_P] @howmuch int AS
-BEGIN
-select top (@howmuch) * from users order by userid
-END;
-
-create procedure MultiplyIO(@factor int, @val int output) as
-begin
-	set @val = @factor*@val;
-end;
-
 create procedure TestDecimal
 @inParam decimal(15, 8),
 @copyOfInParam decimal(15, 8) out,
@@ -287,3 +302,4 @@ begin
 set @copyOfInParam = @inParam
 set @constOutParam = 123.456;
 end
+

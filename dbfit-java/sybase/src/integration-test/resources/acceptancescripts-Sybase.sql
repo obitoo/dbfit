@@ -1,4 +1,67 @@
 
+-- Create databases
+CREATE DATABASE FitNesseTestDB
+go
+
+CREATE DATABASE FitNesseTestDB2
+go
+
+
+-- Create user
+CREATE LOGIN FitNesseUser WITH PASSWORD FitNesseUser   default database FitNesseTestDB
+go
+GRANT ROLE sa_role TO FitNesseUser
+go
+
+USE FitNesseTestDB
+go
+sp_adduser FitNesseUser
+go
+GRANT all TO FitNesseUser
+go
+
+USE FitNesseTestDB2
+go
+sp_adduser FitNesseUser
+go
+GRANT all TO FitNesseUser
+go
+
+
+--  Objects - first Db
+--  Objects - second Db
+USE FitNesseTestDB2
+go
+
+CREATE TABLE dbo.Users2 (
+    Name     VARCHAR(50) NULL,
+    UserName VARCHAR(50) NULL,
+    UserId   INT IDENTITY NOT NULL
+)
+go
+
+CREATE PROCEDURE dbo.MakeUser2
+AS
+BEGIN
+    INSERT
+      INTO Users2
+           (
+           Name
+         , UserName
+           )
+    VALUES (
+           'user1'
+         , 'fromproc'
+           )
+END
+go
+
+EXEC sp_procxmode MakeUser2 , anymode
+go
+
+
+
+
 
 
 --IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Multiply]') AND type in (N'FN', N'IF', N'TF', N'FS', N'FT'))
@@ -6,7 +69,7 @@
 --execute dbo.sp_executesql @statement = N'  create function [dbo].[Multiply](@n1 int, @n2 int) returns int as  begin  	declare @num3 int;  	set @num3 = @n1*@n2;  	return @num3;  end;  ' 
 --END
 
---GO
+--go
 
 
 
@@ -23,7 +86,7 @@ BEGIN
 END;
 ' 
 END
-GO
+go
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[ReturnUserTable_F]') AND type in (N'FN', N'IF', N'TF', N'FS', N'FT'))
 BEGIN
 execute dbo.sp_executesql @statement = N'-- =============================================
@@ -59,7 +122,7 @@ END
 ' 
 END
 
-GO
+go
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[ConcatenateStrings_P]') AND type in (N'P', N'PC'))
 BEGIN
 EXEC dbo.sp_executesql @statement = N'
@@ -73,7 +136,7 @@ BEGIN
 END
 ' 
 END
-GO
+go
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[ConcatenateStrings_F]') AND type in (N'FN', N'IF', N'TF', N'FS', N'FT'))
 BEGIN
 execute dbo.sp_executesql @statement = N'
@@ -92,7 +155,7 @@ END
 ' 
 END
 
-GO
+go
 
 
 
@@ -105,14 +168,14 @@ CREATE TABLE users(
         userid   int         IDENTITY NOT NULL
 )
 END
-GO
+go
 
 
 CREATE PROCEDURE MakeUser AS
 begin
         insert into users (name, username) values ('user1', 'fromproc')
 end
-GO
+go
 
 CREATE PROCEDURE calclength_p @name      VARCHAR(255)
                             , @strlength INT OUTPUT
@@ -120,14 +183,14 @@ AS
 BEGIN
 	SET @strlength = len(@name)
 END
-GO
+go
 
 CREATE PROCEDURE increment_p @counter INT OUTPUT
 AS
 BEGIN
 	SET @counter = ISNULL(@counter, 1) + 1
 END
-GO
+go
 
 
 
@@ -153,7 +216,7 @@ BEGIN
 END
 ' 
 END
-GO
+go
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[OpenCrsr_P]') AND type in (N'P', N'PC'))
 BEGIN
 EXEC dbo.sp_executesql @statement = N'CREATE PROCEDURE [dbo].[OpenCrsr_P]
@@ -169,7 +232,7 @@ BEGIN
 END
 ' 
 END
-GO
+go
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[DeleteUserTable_P]') AND type in (N'P', N'PC'))
 BEGIN
 EXEC dbo.sp_executesql @statement = N'CREATE PROCEDURE [dbo].[DeleteUserTable_P]

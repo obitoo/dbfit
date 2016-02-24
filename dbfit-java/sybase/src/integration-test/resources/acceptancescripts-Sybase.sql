@@ -29,6 +29,55 @@ go
 
 
 --  Objects - first Db
+
+USE FitNesseTestDB
+go
+
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name = 'users' AND type in ('U'))
+BEGIN
+CREATE TABLE users(
+        name     varchar(50) NULL,
+        username varchar(50) NULL,
+        userid   int         IDENTITY NOT NULL
+)
+END
+go
+
+
+CREATE PROCEDURE MakeUser AS
+begin
+        insert into users (name, username) values ('user1', 'fromproc')
+end
+go
+
+CREATE PROCEDURE calclength_p @name      VARCHAR(255)
+                            , @strlength INT OUTPUT
+AS
+BEGIN
+	SET @strlength = len(@name)
+END
+go
+
+CREATE PROCEDURE increment_p @counter INT OUTPUT
+AS
+BEGIN
+	SET @counter = ISNULL(@counter, 1) + 1
+END
+go
+
+CREATE FUNCTION dbo.Multiply(@n1 int, @n2 int) RETURNS int 
+AS
+BEGIN
+   declare @num3 int
+   set @num3 = @n1*@n2
+   return @num3
+END
+go
+
+
+
+
+
 --  Objects - second Db
 USE FitNesseTestDB2
 go
@@ -61,15 +110,10 @@ go
 
 
 
+--- EOF
+--- EOF
+--- EOF
 
-
-
---IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Multiply]') AND type in (N'FN', N'IF', N'TF', N'FS', N'FT'))
---BEGIN
---execute dbo.sp_executesql @statement = N'  create function [dbo].[Multiply](@n1 int, @n2 int) returns int as  begin  	declare @num3 int;  	set @num3 = @n1*@n2;  	return @num3;  end;  ' 
---END
-
---go
 
 
 
@@ -157,40 +201,6 @@ END
 
 go
 
-
-
-
-IF NOT EXISTS (SELECT * FROM sysobjects WHERE name = 'Users' AND type in ('U'))
-BEGIN
-CREATE TABLE users(
-        name     varchar(50) NULL,
-        username varchar(50) NULL,
-        userid   int         IDENTITY NOT NULL
-)
-END
-go
-
-
-CREATE PROCEDURE MakeUser AS
-begin
-        insert into users (name, username) values ('user1', 'fromproc')
-end
-go
-
-CREATE PROCEDURE calclength_p @name      VARCHAR(255)
-                            , @strlength INT OUTPUT
-AS
-BEGIN
-	SET @strlength = len(@name)
-END
-go
-
-CREATE PROCEDURE increment_p @counter INT OUTPUT
-AS
-BEGIN
-	SET @counter = ISNULL(@counter, 1) + 1
-END
-go
 
 
 

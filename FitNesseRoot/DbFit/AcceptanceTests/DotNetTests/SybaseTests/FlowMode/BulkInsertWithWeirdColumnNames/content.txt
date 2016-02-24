@@ -15,4 +15,5 @@
 |nuja|2|
 |nnn|3|
 
+| Commit | 
 |Execute|Drop table Test_DBFit|

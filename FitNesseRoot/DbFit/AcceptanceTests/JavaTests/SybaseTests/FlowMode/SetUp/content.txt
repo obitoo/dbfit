@@ -9,3 +9,8 @@
 !| Connect | jdbc:jtds:sybase://LOND1301BULLOCK:5000;user=FitNesseUser;password=FitNesseUser;databaseName=FitNesseTestDB |
 
  
+| Execute Ddl | IF EXISTS (select * from sysobjects where name = 'Test_DBFit' ) DROP TABLE Test_DBFit |
+| Execute Ddl | IF EXISTS (select * from sysobjects where name = 'Test_DBFit2') DROP TABLE Test_DBFit2 |
+| Execute Ddl | IF EXISTS (select * from sysobjects where name = 'TESTTBL'    ) DROP TABLE TESTTBL |
+
+

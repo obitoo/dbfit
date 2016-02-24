@@ -1,3 +1,6 @@
+|Execute ddl| set chained off |   
+- this just isnt going to work otherwise
+
 |Execute|Create table dbo.Test_DBFit(name varchar(50), luckyNumber int)|
 
 |Insert|dbo.Test_DBFit|
@@ -11,6 +14,10 @@
 |pera|1|
 |nuja|2|
 |nnn|3|
+
+
+
+
 
 |Execute|Drop table dbo.Test_DBFit|
 

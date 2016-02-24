@@ -9,6 +9,7 @@
 	<Suite/>
 	<SymbolicLinks>
 		<DisabledTests>.DbFit.AcceptanceTests.DotNetTests.SybaseTests.DisabledTests</DisabledTests>
+		<FailingTests>.DbFit.AcceptanceTests.DotNetTests.SybaseTests.FailingTests</FailingTests>
 	</SymbolicLinks>
 	<Versions/>
 	<WhereUsed/>

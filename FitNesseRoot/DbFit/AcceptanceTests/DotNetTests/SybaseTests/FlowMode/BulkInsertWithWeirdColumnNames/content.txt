@@ -16,4 +16,4 @@
 |nnn|3|
 
 | Commit | 
-|Execute|Drop table Test_DBFit|
+|Execute Ddl|Drop table Test_DBFit|

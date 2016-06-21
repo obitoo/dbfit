@@ -1,20 +1,11 @@
+!define TEST_SYSTEM {fit}
+!path lib/*.jar
 !|import fixture|
-|dbfit.fixture|
-
-|DatabaseEnvironment|sybase|
-|Connect | jdbc:jtds:sybase://10.158.0.189:8000;user=glsmkddev2;password=glsmkddev2user;databaseName=glsmkd_dev2_t |
+|dbfit.fixture  |
 
 
-# Ribo @ deva03 : 10.158.0.136:8001;
-# GBR_HYD44:   
-# GBR_HYD53:      10.158.0.189:8000;
+!|DatabaseEnvironment|sybase                                                                                                               |
+| Connect | jdbc:jtds:sybase://LOND1301BULLOCK:5000;user=FitNesseUser;password=FitNesseUser;databaseName=FitNesseTestDB |
 
-# 
-# "Chained Transaction Mode implicitly begins a transaction before any data-retrieval or modification statement"
-# 
-# So for Standalone mode we need to set Chained Execution mode off, else Sybase
-# won't let us do things like drop tables (within a transaction) - unlike Sql Server
-#
-#
-|Execute Ddl|set chained off|  
 
+#|Execute | IF EXISTS (select * from sysobjects where name = 'TESTTBL' ) DROP TABLE TESTTBL |

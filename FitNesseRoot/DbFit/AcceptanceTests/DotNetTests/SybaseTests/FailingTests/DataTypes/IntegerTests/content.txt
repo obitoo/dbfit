@@ -1,0 +1,69 @@
+!3 Integers
+
+|Execute ddl | set chained off |
+
+|Execute|Create table datatypetest (n1 BIGINT)|
+
+|Insert|datatypetest|
+|n1|
+|11|
+
+|Query|select * from datatypetest|
+|n1|
+|11|
+
+
+|Execute ddl|Drop table datatypetest |
+
+|Execute|Create table datatypetest (n2 TINYINT)|
+
+|Insert|datatypetest|
+|n2|
+|12|
+
+|Query|select * from datatypetest|
+|n2|
+|12|
+
+
+|Execute ddl|Drop table datatypetest |
+
+|Execute|Create table datatypetest (n3 SMALLINT)|
+
+|Insert|datatypetest|
+|n3|
+|13|
+
+|Query|select * from datatypetest|
+|n3|
+|13|
+
+
+
+|Execute ddl|Drop table datatypetest |
+
+|Execute|Create table datatypetest (n4 INT)|
+
+|Insert|datatypetest|
+|n4|
+|14|
+
+|Query|select * from datatypetest|
+|n4|
+|14|
+
+
+|Execute ddl|Drop table datatypetest |
+
+|Execute|Create table datatypetest (n1 BIGINT, n2 TINYINT, n3 SMALLINT, n4 INT)|
+
+|Insert|datatypetest|
+|n1|n2|n3|n4|
+|11|12|13|14|
+
+|Query|select * from datatypetest|
+|n1|n2|n3|n4|
+|11|12|13|14|
+
+
+|Execute ddl|Drop table datatypetest |

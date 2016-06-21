@@ -2,12 +2,9 @@ package dbfit.environment;
 
 import dbfit.annotations.DatabaseEnvironment;
 import dbfit.api.AbstractDbEnvironment;
-import dbfit.util.DbParameterAccessor;
-import dbfit.util.DbParameterAccessorsMapBuilder;
-import dbfit.util.Direction;
+import dbfit.util.*;
 import static dbfit.util.Direction.*;
 import static dbfit.environment.SybaseNameNormaliser.normaliseName;
-import dbfit.util.TypeNormaliserFactory;
 import static dbfit.environment.SybaseTypeNameNormaliser.normaliseTypeName;
 
 
@@ -64,6 +61,19 @@ public class SybaseEnvironment extends AbstractDbEnvironment {
 **           */
     }
 
+
+    @Override
+    public DdlStatementExecution createDdlStatementExecution(String ddl)
+            throws SQLException {
+        return new DdlStatementExecution(getConnection().createStatement(), ddl) {
+            @Override
+            public void run() throws SQLException {
+                getConnection().commit();
+                super.run();
+            }
+        };
+    }
+
     private static String paramNamePattern = "@([A-Za-z0-9_]+)";
     private static Pattern paramRegex = Pattern.compile(paramNamePattern);
 
@@ -86,8 +96,8 @@ public class SybaseEnvironment extends AbstractDbEnvironment {
                       +" where c.id = OBJECT_ID(?) "
                       +"  and   T1.usertype  = c.usertype "
                       +"  and   T2.type      = T1.type "
-                      +"  and   T2.name     IN ('char', 'int', 'intn', 'bigint','bigintn', "
-                      +"                        'datetime','date','float', 'floatn', 'varchar', 'smallint', 'tinyint') "
+                      +"  and   T2.name     IN ('char', 'int', 'intn', 'bigint','bigintn','bit','decimal','real','numeric', "
+                      +"                        'datetime','date','time','float', 'floatn', 'varchar', 'smallint', 'tinyint') "
                       +" order by colid ";
         return readIntoParams(tableOrViewName, qry);
     }
@@ -241,8 +251,8 @@ public class SybaseEnvironment extends AbstractDbEnvironment {
                +"where p.id = OBJECT_ID(?) "
                +"  and   T1.usertype  = p.usertype "
                +"  and   T2.type      = T1.type "
-               +"  and   T2.name     IN ('char', 'int', 'intn', 'bigint','bigintn', "
-               +"                        'datetime','date', 'float', 'floatn', 'varchar', 'smallint', 'tinyint') "
+               +"  and   T2.name     IN ('char', 'int', 'intn', 'bigint','bigintn','bit', 'decimal','real','numeric', "
+               +"                        'datetime','date','time','float', 'floatn', 'varchar', 'smallint', 'tinyint') "
                +"order by colid ");
 
     }
@@ -270,5 +280,6 @@ public class SybaseEnvironment extends AbstractDbEnvironment {
         sb.append(")");
         return sb.toString();
     }
+
 }
 

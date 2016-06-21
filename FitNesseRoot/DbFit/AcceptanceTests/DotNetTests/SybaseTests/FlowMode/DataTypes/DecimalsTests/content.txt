@@ -1,5 +1,14 @@
+
 !3 Decimals and numerics
-|Execute|Create table datatypetest (n1 REAL, n2 FLOAT, n3 DECIMAL(4,2), n4 NUMERIC(4,2), n5 MONEY, n6 SMALLMONEY)|
+
+
+Sybase IQ includes two user-defined data types, MONEY and SMALLMONEY, which are implemented as NUMERIC(19,4) and NUMERIC(10,4) respectively. They are provided primarily for compatibility with Adaptive Server Enterprise.
+
+
+#|Execute|Create table datatypetest (n1 REAL, n2 FLOAT, n3 DECIMAL(4,2), n4 NUMERIC(4,2), n5 MONEY, n6 SMALLMONEY)|
+|Execute|Create table datatypetest (n1 REAL, n2 FLOAT, n3 DECIMAL(4,2), n4 NUMERIC(4,2), n5 NUMERIC(19,4), n6 NUMERIC(10,4))|
+
+
 
 |Insert|datatypetest                 |
 |n1    |n2   |n3   |n4   |n5   |n6   |

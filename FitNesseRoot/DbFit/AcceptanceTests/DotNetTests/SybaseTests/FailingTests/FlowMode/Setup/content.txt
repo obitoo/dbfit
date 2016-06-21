@@ -2,4 +2,3 @@
 
 !| Connect | jdbc:jtds:sybase://LOND1301BULLOCK:5000;user=FitNesseUser;password=FitNesseUser;databaseName=FitNesseTestDB |
 
-

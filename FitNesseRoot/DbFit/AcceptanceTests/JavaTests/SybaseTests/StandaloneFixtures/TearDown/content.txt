@@ -1,2 +1,6 @@
 |Database Environment|
-|Rollback|
+#|Rollback|
+|Execute | IF EXISTS (select * from sysobjects where name = 'Test_DBFit' ) DROP TABLE Test_DBFit  |
+|Execute | IF EXISTS (select * from sysobjects where name = 'Test_DBFit2') DROP TABLE Test_DBFit2 |
+|Execute | IF EXISTS (select * from sysobjects where name = 'TESTTBL' ) DROP TABLE TESTTBL |
+#|Execute ddl| delete users |

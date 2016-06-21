@@ -1,0 +1,4 @@
+|execute | IF EXISTS (select * from sysobjects where name = 'Test_DBFit' ) DROP TABLE Test_DBFit  |
+|execute | IF EXISTS (select * from sysobjects where name = 'Test_DBFit2') DROP TABLE Test_DBFit2 |
+|execute | IF EXISTS (select * from sysobjects where name = 'TESTTBL' ) DROP TABLE TESTTBL |
+#|Execute ddl| delete users |

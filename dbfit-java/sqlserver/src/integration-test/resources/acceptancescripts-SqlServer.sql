@@ -19,7 +19,7 @@ ALTER DATABASE [FitNesseTestDB2] COLLATE Latin1_General_CS_AS
 ALTER DATABASE [FitNesseTestDB2] COLLATE Latin1_General_CI_AS */
 GO
 
-CREATE LOGIN [FitNesseUser] WITH PASSWORD='FitNesseUser'
+CREATE LOGIN [FitNesseUser] WITH PASSWORD='FitNesseUser', CHECK_POLICY = OFF
 GO
 
 USE [FitNesseTestDB]

@@ -17,19 +17,21 @@
 
 -----
 
-!|set option|autocommit|true|
-
-!|Insert|TESTTBL|
-|ID     |VAL    |
-|1      |2      |
-
-!|Rollback|
-
-!|Query|select ID, VAL from TESTTBL|
-|ID    |VAL?|
-|1     |2   |
-
-!|Execute Ddl|drop table TESTTBL|
-!|Commit|
-
-!|set option|autocommit|false|
+# Removing this since autocommit sets chained on - same as flow mode 
+#!|set option|autocommit|true|
+#
+#!|Insert|TESTTBL|
+#|ID     |VAL    |
+#|1      |2      |
+#
+#!|Rollback|
+#
+#!|Query|select ID, VAL from TESTTBL|
+#|ID    |VAL?|
+#|1     |2   |
+#
+# !|Commit|
+#!|Execute Ddl|drop table TESTTBL|
+#
+#
+#!|set option|autocommit|false|

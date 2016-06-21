@@ -1,5 +1,9 @@
 !3 stored proc, multi row result set
 
+|execute ddl | set chained off |
+
+|execute | delete users |
+
 
 |insert|users|
 |Name| !-UserName-!|
@@ -17,4 +21,12 @@
 |user2|user name 2|
 |user3|user name 3|
 
+If you use a parameter, make sure to include exec
 
+|set parameter|hm|3|
+
+|query|exec ListUsers_P @hm |
+|Name|UserName|
+|user1|user name 1|
+|user2|user name 2|
+|user3|user name 3|

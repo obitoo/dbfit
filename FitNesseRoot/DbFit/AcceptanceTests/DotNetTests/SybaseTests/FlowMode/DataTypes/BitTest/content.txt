@@ -2,7 +2,7 @@
 
 BIT maps to boolean
 
-|Execute|Create table datatypetest (b1 bit)|
+|Execute|Create table datatypetest (b1 bit not null)|
 
 |Insert|datatypetest|
 |b1|

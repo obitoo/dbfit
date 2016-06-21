@@ -1,4 +1,4 @@
-| commit |
-|Execute|Drop table datatypetest|
-| commit |
+|Execute ddl|Drop table datatypetest|
+|Execute ddl| delete users |
+
 

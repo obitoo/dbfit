@@ -1,0 +1,5 @@
+<SymbolicLinks>
+<CommitAndRollback>.DbFit.AcceptanceTests.LibraryTests.CommitAndRollback</CommitAndRollback>
+</SymbolicLinks>
+
+

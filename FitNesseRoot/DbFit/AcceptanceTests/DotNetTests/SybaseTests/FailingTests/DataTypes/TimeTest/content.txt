@@ -1,8 +1,8 @@
 !3 Time
 
-|Execute|Create table datatypetest(id int, my_time time)|
+|Execute ddl|Create table datatypetest(id int, my_time time)|
 
-|Ordered Query|select cast(sysdatetime() as time) my_time|
+|Ordered Query|select cast(getdate() as time) my_time|
 |my_time                                                 |
 |>>tm1                                                   |
 

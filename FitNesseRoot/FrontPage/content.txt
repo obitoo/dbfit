@@ -14,6 +14,10 @@ This Wiki contains the [[reference documentation][.DbFit.DbFitReference]] and [[
 For a detailed introduction on how to use FitNesse, see [[!-Test Driven .NET Development With FitNesse-!][http://gojko.net/fitnesse/book]]. See http://dbfit.github.io/dbfit/ for more information on !-DbFit-!. You can leave your comments and feedback [[here][http://dbfit.github.io/dbfit/]].
 !-</div>-!
 ----
+!3 Go to Gloss SybaseBeta page
+!3 Sybase Acceptance Tests 
+!see DbFit.AcceptanceTests.JavaTests.SybaseTests
+----
 !3 DbFit is based on the [[FitNesse][FitNesse.FitNesse]] framework.
 
 | '''To Learn More about FitNesse...'''|

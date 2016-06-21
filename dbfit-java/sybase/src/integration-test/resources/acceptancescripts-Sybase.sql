@@ -52,9 +52,16 @@ go
 
 CREATE PROCEDURE MakeUser AS
 begin
-        insert into users (name, username) values ('user1', 'fromproc')
+        insert into users (Name, UserName) values ('user1', 'fromproc')
 end
 go
+
+EXEC sp_procxmode MakeUser , anymode
+
+
+
+
+
 
 CREATE PROCEDURE CalcLength_P (@name      VARCHAR(255) , @strlength INT OUTPUT)
 AS
@@ -132,6 +139,25 @@ go
 EXEC sp_procxmode ListUsers_P , anymode
 go
 
+DROP PROCEDURE TestDecimal
+go
+CREATE PROCEDURE TestDecimal (
+                                @inParam decimal(15, 8),
+                                @copyOfInParam decimal(15, 8) output,
+                                @constOutParam decimal(15, 8) output
+                             )
+as
+begin
+   set @copyOfInParam = @inParam
+   set @constOutParam = 123.456
+end
+go
+EXEC sp_procxmode TestDecimal , anymode
+go
+
+
+
+
 ------------------------------------------------
 --  Objects - second Db
 ------------------------------------------------
@@ -165,10 +191,9 @@ EXEC sp_procxmode MakeUser2 , anymode
 go
 
 
-
 --- EOF
 --- EOF
---- EOF
+--- EOF - Non-ported Sql server code below here
 
 
 
@@ -292,14 +317,3 @@ AS
 DELETE [Users];
 ' 
 END
-
-create procedure TestDecimal
-@inParam decimal(15, 8),
-@copyOfInParam decimal(15, 8) out,
-@constOutParam decimal(15, 8) out
-as
-begin
-set @copyOfInParam = @inParam
-set @constOutParam = 123.456;
-end
-
